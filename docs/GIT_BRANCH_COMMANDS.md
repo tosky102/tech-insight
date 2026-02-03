@@ -33,4 +33,4 @@ ls -la backend frontend docs
 
 ## Issue の作成
 
-`docs/ISSUES.md` に記載した推奨 Issue を GitHub / GitLab で作成し、各ブランチや PR と紐付けて利用できます。
+`docs/ISSUES.md` に記載した推奨 Issue を GitHubで作成し、各ブランチや PR と紐付けて利用できます。
