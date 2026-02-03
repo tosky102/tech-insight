@@ -44,3 +44,6 @@ npm-debug.log*
 
 # Data (optional: keep data/.gitkeep, ignore large or generated CSVs if needed)
 # data/*.csv
+
+# Local helper (minimal README used only for initial branch setup)
+README.minimal.md
