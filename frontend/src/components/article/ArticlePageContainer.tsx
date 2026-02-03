@@ -27,7 +27,14 @@ import { Modal } from "@/components/ui/Modal";
 // 一度に取得する記事件数（無限スクロールの 1 ページ分）
 const PAGE_SIZE = 12;
 
-export function ArticlePageContainer() {
+export interface ArticlePageContainerProps {
+  /** false のときは閲覧のみ（新規作成・編集・削除なし）。トップページ用。 */
+  allowCrud?: boolean;
+  /** ページ見出し（未指定時は "TechInsight"） */
+  title?: string;
+}
+
+export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }: ArticlePageContainerProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -287,9 +294,11 @@ export function ArticlePageContainer() {
     <div className="mx-auto flex h-full w-full max-w-full flex-col overflow-hidden px-4 py-8 sm:px-6 md:max-w-[1040px] lg:max-w-[1600px] lg:px-8">
       <header className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          TechInsight
+          {title}
         </h1>
-        <Button onClick={handleCreateClick}>新規記事</Button>
+        {allowCrud && (
+          <Button onClick={handleCreateClick}>新規記事</Button>
+        )}
       </header>
 
       <section className="mb-6 shrink-0">
@@ -327,8 +336,8 @@ export function ArticlePageContainer() {
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:flex-none lg:shrink-0">
           <ArticleDetailPanel
             article={selectedArticle}
-            onEdit={handleEditFromDetail}
-            onDelete={handleDeleteClick}
+            onEdit={allowCrud ? handleEditFromDetail : undefined}
+            onDelete={allowCrud ? handleDeleteClick : undefined}
             isDeleting={isDeleting}
           />
         </div>
@@ -343,34 +352,36 @@ export function ArticlePageContainer() {
         isLoading={formSubmitting}
       />
 
-      <Modal
-        isOpen={articleToDelete != null}
-        onClose={() => !isDeleting && setArticleToDelete(null)}
-        title="削除の確認"
-        maxWidth="sm"
-      >
-        <div className="flex flex-col gap-4">
-          <p className="text-slate-700">
-            「{articleToDelete?.title}」を削除してもよろしいですか？
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setArticleToDelete(null)}
-              disabled={isDeleting}
-            >
-              キャンセル
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDelete}
-              isLoading={isDeleting}
-            >
-              削除
-            </Button>
+      {allowCrud && (
+        <Modal
+          isOpen={articleToDelete != null}
+          onClose={() => !isDeleting && setArticleToDelete(null)}
+          title="削除の確認"
+          maxWidth="sm"
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-slate-700">
+              「{articleToDelete?.title}」を削除してもよろしいですか？
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setArticleToDelete(null)}
+                disabled={isDeleting}
+              >
+                キャンセル
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmDelete}
+                isLoading={isDeleting}
+              >
+                削除
+              </Button>
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 }
