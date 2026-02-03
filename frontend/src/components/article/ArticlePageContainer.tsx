@@ -34,7 +34,10 @@ export interface ArticlePageContainerProps {
   title?: string;
 }
 
-export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }: ArticlePageContainerProps) {
+export function ArticlePageContainer({
+  allowCrud = true,
+  title = "TechInsight",
+}: ArticlePageContainerProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -173,21 +176,45 @@ export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }
    * 検索モード切り替え時のハンドラ
    *
    * - semantic へ切り替え:
-   *   - まだ AI 検索を実行していない場合は一覧を空にし、「マッチした記事のみ表示」という仕様を担保
+   *   - 直近の AI 検索クエリがあればそれで再検索
+   *   - なければ直近のキーワード検索文字列を AI 検索クエリとして実行
+   *   - いずれも無い場合は一覧を空にし、「マッチした記事のみ表示」という仕様を担保
    * - keyword へ戻す:
-   *   - lastKeyword があればそのキーワード検索結果、なければ全件を再取得
+   *   - lastKeyword があればそのキーワード検索結果、
+   *   - なければ lastSemanticQuery をキーワードとして使って再検索、
+   *   - どちらも無ければ全件を再取得
    */
   const handleModeChange = useCallback(
     (newMode: SearchMode) => {
       setSearchMode(newMode);
       if (newMode === "semantic") {
-        if (!lastSemanticQuery) {
+        if (lastSemanticQuery.trim().length > 0) {
+          // すでに AI 検索を行っている場合は、そのクエリを使って再検索
+          fetchSemantic(lastSemanticQuery, 1);
+        } else if (lastKeyword.trim().length > 0) {
+          // 直近のキーワード検索文字列を、そのまま AI 検索クエリとして扱う
+          setLastSemanticQuery(lastKeyword);
+          setLastKeyword("");
+          fetchSemantic(lastKeyword, 1);
+        } else {
+          // どちらの履歴もない場合は一覧を空にして「マッチした記事のみ」モードにする
           setArticles([]);
           setTotal(0);
           setPage(1);
         }
       } else {
-        fetchList(1, lastKeyword || undefined, false, sort);
+        if (lastKeyword.trim().length > 0) {
+          // 直近のキーワード検索がある場合はそれを再実行
+          fetchList(1, lastKeyword, false, sort);
+        } else if (lastSemanticQuery.trim().length > 0) {
+          // AI検索から戻る場合は、セマンティック検索で使ったクエリ文字列を
+          // 通常のキーワード検索として流用する
+          setLastKeyword(lastSemanticQuery);
+          fetchList(1, lastSemanticQuery, false, sort);
+        } else {
+          // どちらの履歴もない場合は全件取得
+          fetchList(1, undefined, false, sort);
+        }
       }
     },
     [lastSemanticQuery, lastKeyword, sort, fetchList]
@@ -290,15 +317,58 @@ export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }
     }
   }, [articleToDelete]);
 
+  // 検索結果 0 件時に、他方の検索モードへ切り替えるためのボタン表示制御
+  const isEmpty = !isLoading && articles.length === 0;
+  const canSwitchFromKeyword =
+    isEmpty && searchMode === "keyword" && lastKeyword.trim().length > 0;
+  const canSwitchFromSemantic =
+    isEmpty && searchMode === "semantic" && lastSemanticQuery.trim().length > 0;
+
+  const emptyActionLabel = canSwitchFromKeyword
+    ? "AI検索に切り替える"
+    : canSwitchFromSemantic
+    ? "キーワード検索に切り替える"
+    : undefined;
+
+  const handleEmptyAction =
+    canSwitchFromKeyword && !isLoading
+      ? () => {
+          // キーワード検索で 0 件だった場合:
+          // - 検索モードを semantic に切り替え
+          // - 直近のキーワード文字列を AI 検索クエリとしてそのまま投げる
+          setSearchMode("semantic");
+          if (lastKeyword.trim().length > 0) {
+            handleSemanticSearch(lastKeyword);
+          }
+        }
+      : canSwitchFromSemantic && !isLoading
+      ? () => {
+          // AI 検索で 0 件だった場合:
+          // - 検索モードを keyword に切り替え
+          // - 直近の AI クエリ文字列をキーワード検索として実行
+          setSearchMode("keyword");
+          if (lastSemanticQuery.trim().length > 0) {
+            handleKeywordSearch(lastSemanticQuery);
+          }
+        }
+      : undefined;
+
+  const emptyMessage =
+    searchMode === "semantic"
+      ? !lastSemanticQuery
+        ? "検索キーワードを入力してAI検索を実行してください。マッチした記事のみ表示されます。"
+        : "該当する記事がありませんでした。"
+      : lastKeyword.trim().length > 0
+      ? "該当する記事がありませんでした。"
+      : undefined;
+
   return (
-    <div className="mx-auto flex h-full w-full max-w-full flex-col overflow-hidden px-4 py-8 sm:px-6 md:max-w-[1040px] lg:max-w-[1600px] lg:px-8">
+    <div className="mx-auto flex h-full w-full max-w-full flex-col overflow-hidden px-4 py-8 pb-4 sm:px-6 md:max-w-[1040px] lg:max-w-[1600px] lg:px-8">
       <header className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           {title}
         </h1>
-        {allowCrud && (
-          <Button onClick={handleCreateClick}>新規記事</Button>
-        )}
+        {allowCrud && <Button onClick={handleCreateClick}>新規記事</Button>}
       </header>
 
       <section className="mb-6 shrink-0">
@@ -312,7 +382,7 @@ export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }
       </section>
 
       <section className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row lg:gap-4">
-        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto lg:min-h-[400px] lg:max-h-[calc(100vh-200px)] max-h-[40vh]">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto lg:min-h-[400px] lg:max-h-[calc(100vh-16rem)] max-h-[40vh]">
           <ArticleList
             articles={articles}
             total={total}
@@ -324,13 +394,10 @@ export function ArticlePageContainer({ allowCrud = true, title = "TechInsight" }
             sort={sort}
             onSortChange={setSort}
             selectedArticleId={selectedArticle?.id ?? null}
-            emptyMessage={
-              searchMode === "semantic"
-                ? !lastSemanticQuery
-                  ? "検索キーワードを入力してAI検索を実行してください。マッチした記事のみ表示されます。"
-                  : "該当する記事がありませんでした。"
-                : undefined
-            }
+            emptyMessage={emptyMessage}
+            emptyActionLabel={emptyActionLabel}
+            emptyActionDisabled={isLoading}
+            onEmptyAction={handleEmptyAction}
           />
         </div>
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:flex-none lg:shrink-0">

@@ -25,7 +25,7 @@ export function ArticleDetailPanel({
   // 記事が選択されていない場合のプレースホルダー表示
   if (!article) {
     return (
-      <aside className="flex h-full min-h-0 w-full flex-col border-slate-200 bg-slate-50/50 lg:min-h-[400px] lg:h-auto lg:w-[420px] lg:min-w-[360px] lg:border-l">
+      <aside className="flex h-full min-h-0 w-full flex-col border-slate-200 bg-slate-50/50 lg:min-h-[400px] lg:w-[420px] lg:min-w-[360px] lg:border-l">
         <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center p-8 text-center text-slate-500 lg:min-h-0">
           <p className="text-sm">記事を選択するとここに詳細が表示されます。</p>
         </div>

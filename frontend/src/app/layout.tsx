@@ -1,11 +1,10 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Header } from "@/components/layout/Header";
 
 export const metadata: Metadata = {
-  title: 'TechInsight - AIナレッジベース',
-  description: '技術記事のナレッジマネジメント',
+  title: "TechInsight - AIナレッジベース",
+  description: "技術記事のナレッジマネジメント",
 };
 
 export default function RootLayout({
@@ -18,7 +17,6 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col antialiased font-sans">
         <Header />
         {children}
-        <Footer />
       </body>
     </html>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 /**
  * 記事一覧コンポーネント
  *
@@ -11,6 +13,7 @@ import { useEffect, useRef, useCallback } from "react";
 import type { Article } from "@/types/article";
 import { SORT_OPTIONS, type SortOption } from "@/constants/sort";
 import { ArticleCard } from "./ArticleCard";
+import { Button } from "@/components/ui/Button";
 
 export type { SortOption };
 
@@ -28,6 +31,12 @@ export interface ArticleListProps {
   selectedArticleId?: number | null;
   /** 記事0件時のメッセージ（未指定時はデフォルト文言） */
   emptyMessage?: string;
+  /** 記事0件時に表示するアクションボタンのラベル（未指定時はボタン非表示） */
+  emptyActionLabel?: string;
+  /** 空状態ボタンの無効化フラグ */
+  emptyActionDisabled?: boolean;
+  /** 空状態ボタン押下時のハンドラ */
+  onEmptyAction?: () => void;
 }
 
 export function ArticleList({
@@ -42,6 +51,9 @@ export function ArticleList({
   onSortChange,
   selectedArticleId = null,
   emptyMessage = "記事がありません。キーワードで検索するか、新規記事を作成してください。",
+  emptyActionLabel,
+  emptyActionDisabled = false,
+  onEmptyAction,
 }: ArticleListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMore = articles.length < total && total > 0;
@@ -103,7 +115,18 @@ export function ArticleList({
           </div>
         ) : articles.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-slate-500">
-            {emptyMessage}
+            <p className="px-6">{emptyMessage}</p>
+            {emptyActionLabel && onEmptyAction && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="secondary"
+                  onClick={onEmptyAction}
+                  disabled={emptyActionDisabled}
+                >
+                  {emptyActionLabel}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-4">

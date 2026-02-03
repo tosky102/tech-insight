@@ -26,6 +26,12 @@ export function SearchBar({
 }: SearchBarProps) {
   const [value, setValue] = useState('');
 
+  // 各検索モードの説明テキスト（ホバー時に title として表示する）
+  const keywordHelp =
+    'タイトル・本文・カテゴリ・著者を対象に部分一致で検索します。空欄の場合は全件表示になります。';
+  const semanticHelp =
+    '自然言語で入力された文章の意味に近い記事をAIがベクトル類似度で検索します。キーワードが曖昧でもマッチする記事のみを返します。';
+
   /**
    * 検索フォーム送信時の処理
    *
@@ -101,6 +107,7 @@ export function SearchBar({
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               searchMode === 'keyword' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
+              title={keywordHelp}
           >
             キーワード
           </button>
@@ -110,6 +117,7 @@ export function SearchBar({
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               searchMode === 'semantic' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
+              title={semanticHelp}
           >
             AI検索
           </button>
