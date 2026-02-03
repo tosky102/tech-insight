@@ -12,6 +12,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { Article } from "@/types/article";
 import { SORT_OPTIONS, type SortOption } from "@/constants/sort";
+import { DEFAULT_CATEGORY_OPTIONS } from "@/constants/categories";
 import { ArticleCard } from "./ArticleCard";
 import { Button } from "@/components/ui/Button";
 
@@ -37,6 +38,9 @@ export interface ArticleListProps {
   emptyActionDisabled?: boolean;
   /** 空状態ボタン押下時のハンドラ */
   onEmptyAction?: () => void;
+  /** 一覧ヘッダー右側に表示するカテゴリフィルター（未指定時はセレクト非表示） */
+  categoryFilter?: string;
+  onCategoryFilterChange?: (value: string) => void;
 }
 
 export function ArticleList({
@@ -54,6 +58,8 @@ export function ArticleList({
   emptyActionLabel,
   emptyActionDisabled = false,
   onEmptyAction,
+  categoryFilter,
+  onCategoryFilterChange,
 }: ArticleListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMore = articles.length < total && total > 0;
@@ -91,17 +97,51 @@ export function ArticleList({
     <div className="flex h-full flex-col min-h-0">
       <div className="mb-2 flex items-center justify-between shrink-0 text-sm text-slate-500">
         <p>{total > 0 ? `${articles.length} / ${total} 件` : "0 件"}</p>
-        <select
-          value={sort}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-3">
+          {onCategoryFilterChange && (
+            <div className="flex items-center gap-1 overflow-x-auto whitespace-nowrap max-w-[60vw] lg:max-w-lg">
+              <button
+                type="button"
+                onClick={() => onCategoryFilterChange("")}
+                className={`rounded-full px-3 py-1 text-xs border ${
+                  !categoryFilter
+                    ? "bg-brand-600 text-white border-brand-600"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                すべて
+              </button>
+              {DEFAULT_CATEGORY_OPTIONS.map((opt) => {
+                const active = categoryFilter === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onCategoryFilterChange(opt.value)}
+                    className={`rounded-full px-3 py-1 text-xs border ${
+                      active
+                        ? "bg-brand-600 text-white border-brand-600"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <select
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as SortOption)}
+            className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto min-h-0">
         {isLoading && articles.length === 0 ? (

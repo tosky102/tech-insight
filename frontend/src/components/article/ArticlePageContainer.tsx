@@ -43,6 +43,8 @@ export function ArticlePageContainer({
   const [page, setPage] = useState(1);
   const [searchMode, setSearchMode] = useState<SearchMode>("keyword");
   const [sort, setSort] = useState<SortOption>("newest");
+  // 一覧ヘッダーで選択するカテゴリ（現状は UI 表示のみ。将来的にサーバーサイド絞り込みへ拡張可能）
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [lastKeyword, setLastKeyword] = useState("");
   const [lastSemanticQuery, setLastSemanticQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -239,6 +241,17 @@ export function ArticlePageContainer({
     setSelectedArticle(article);
   }, []);
 
+  // カテゴリボタン押下時: キーワード検索モードに切り替え、カテゴリ名で検索を実行する
+  const handleCategoryFilterChange = useCallback(
+    (value: string) => {
+      setCategoryFilter(value);
+      setSearchMode("keyword");
+      // 空文字なら全件、それ以外はカテゴリ名をキーワードとして検索
+      handleKeywordSearch(value);
+    },
+    [handleKeywordSearch]
+  );
+
   const handleCreateClick = useCallback(() => {
     // 新規作成モードでフォームモーダルを開く
     setFormMode("create");
@@ -398,6 +411,8 @@ export function ArticlePageContainer({
             emptyActionLabel={emptyActionLabel}
             emptyActionDisabled={isLoading}
             onEmptyAction={handleEmptyAction}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={handleCategoryFilterChange}
           />
         </div>
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:flex-none lg:shrink-0">
