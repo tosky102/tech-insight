@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const pathname = usePathname();
 
   return (
     <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-full items-center justify-between px-4 sm:px-6 md:max-w-[1040px] lg:max-w-[1600px] lg:px-8">
         <Link
           href="/"
           className="text-lg font-semibold text-slate-900 hover:text-slate-700"
@@ -19,9 +19,9 @@ export function Header() {
           <Link
             href="/"
             className={
-              pathname === '/'
-                ? 'font-medium text-brand-600'
-                : 'text-slate-600 hover:text-slate-900'
+              pathname === "/"
+                ? "font-medium text-brand-600"
+                : "text-slate-600 hover:text-slate-900"
             }
           >
             記事一覧
@@ -29,9 +29,9 @@ export function Header() {
           <Link
             href="/admin"
             className={
-              pathname?.startsWith('/admin')
-                ? 'font-medium text-brand-600'
-                : 'text-slate-600 hover:text-slate-900'
+              pathname?.startsWith("/admin")
+                ? "font-medium text-brand-600"
+                : "text-slate-600 hover:text-slate-900"
             }
           >
             管理画面
