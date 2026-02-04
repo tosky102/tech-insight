@@ -9,6 +9,10 @@ from sqlalchemy.engine import Connection
 from app.config import settings
 from app.models.base import Base
 from app.models.article import Article  # noqa: F401 - register model
+from app.models.metrics import (  # noqa: F401 - register models
+    ArticleClickLog,
+    SearchLog,
+)
 
 config = context.config
 if config.config_file_name is not None:

@@ -21,6 +21,7 @@ from app.crud.article import (
     update_article,
 )
 from app.database import get_db
+from app.models.metrics import SearchLog
 from app.schemas.article import (
     ArticleCreate,
     ArticleListResponse,
@@ -58,6 +59,13 @@ async def list_articles(
         keyword=keyword,
         sort=sort,
     )
+    # 検索ログ（keyword モード）の記録
+    log = SearchLog(
+        query=keyword or "",
+        mode="keyword",
+        result_count=total,
+    )
+    db.add(log)
     return ArticleListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
@@ -77,6 +85,13 @@ async def search_semantic(
     embedding = EmbeddingService.encode_single(q)
     skip = (page - 1) * page_size
     items, total = await semantic_search(db, embedding, skip=skip, limit=page_size)
+    # 検索ログ（semantic モード）の記録
+    log = SearchLog(
+        query=q,
+        mode="semantic",
+        result_count=total,
+    )
+    db.add(log)
     return ArticleListResponse(items=items, total=total, page=page, page_size=page_size)
 
 

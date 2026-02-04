@@ -240,6 +240,25 @@ export function ArticlePageContainer({
     setSelectedArticle(article);
   }, []);
 
+  /** 記事クリック時にメトリクスも送るラッパー（失敗しても await せず UI 優先） */
+  const handleArticleClickWithMetrics = useCallback(
+    (article: Article) => {
+      // 先にUI側の選択を更新
+      setSelectedArticle(article);
+      // メトリクス送信は fire-and-forget で行う
+      const mode = searchMode;
+      const query =
+        mode === "semantic"
+          ? lastSemanticQuery || undefined
+          : lastKeyword || undefined;
+      // エラーは握りつぶす
+      void api
+        .logClick({ articleId: article.id, mode, query })
+        .catch((e) => console.error("failed to log click", e));
+    },
+    [searchMode, lastSemanticQuery, lastKeyword]
+  );
+
   // カテゴリボタン押下時: キーワード検索モードに切り替え、カテゴリ名で検索を実行する
   const handleCategoryFilterChange = useCallback(
     (value: string) => {
@@ -405,6 +424,7 @@ export function ArticlePageContainer({
             page={page}
             pageSize={PAGE_SIZE}
             onArticleClick={handleArticleClick}
+            onArticleClickWithMetrics={handleArticleClickWithMetrics}
             onLoadMore={handleLoadMore}
             isLoading={isLoading}
             sort={sort}

@@ -43,6 +43,8 @@ export interface ArticleListProps {
   onCategoryFilterChange?: (value: string) => void;
   /** 検索クエリに基づき、一覧カード内でハイライトするための文字列 */
   highlightQuery?: string;
+  /** 記事クリック時にメトリクス送信用のフック（任意） */
+  onArticleClickWithMetrics?: (article: Article) => void;
 }
 
 export function ArticleList({
@@ -63,6 +65,7 @@ export function ArticleList({
   categoryFilter,
   onCategoryFilterChange,
   highlightQuery,
+  onArticleClickWithMetrics,
 }: ArticleListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMore = articles.length < total && total > 0;
@@ -178,7 +181,11 @@ export function ArticleList({
                 key={article.id}
                 article={article}
                 isSelected={article.id === selectedArticleId}
-                onClick={() => onArticleClick(article)}
+                onClick={() =>
+                  onArticleClickWithMetrics
+                    ? onArticleClickWithMetrics(article)
+                    : onArticleClick(article)
+                }
                 highlightQuery={highlightQuery}
               />
             ))}
