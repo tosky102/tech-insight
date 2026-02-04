@@ -9,7 +9,7 @@
  */
 import type { Article } from "@/types/article";
 import { Card } from "@/components/ui/Card";
-import { useMemo } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
 export interface ArticleCardProps {
   article: Article;
@@ -61,14 +61,8 @@ export function ArticleCard({
     minute: "2-digit",
   });
 
-  const highlightedTitle = useMemo(
-    () => highlightText(article.title, highlightQuery),
-    [article.title, highlightQuery]
-  );
-  const highlightedContent = useMemo(
-    () => highlightText(article.content, highlightQuery),
-    [article.content, highlightQuery]
-  );
+  const highlightedTitle = highlightText(article.title, highlightQuery);
+  const highlightedContent = highlightText(article.content, highlightQuery);
 
   return (
     <Card
@@ -77,25 +71,39 @@ export function ArticleCard({
           ? "border-2 border-brand-500 border-l-4 border-l-brand-600 bg-brand-50 shadow-sm ring-1 ring-brand-200 hover:bg-brand-100"
           : "bg-white hover:bg-slate-50"
       }`}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      aria-current={isSelected ? "true" : undefined}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
     >
-      <div className="p-4">
+      <div
+        className="p-4"
+        role="button"
+        tabIndex={0}
+        aria-current={isSelected ? "true" : undefined}
+        onClick={onClick}
+        onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+      >
         {isSelected && (
           <span className="mb-2 inline-block rounded bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
             選択中
           </span>
         )}
         <h3 className="font-semibold text-slate-900 line-clamp-2">
-          {highlightedTitle}
+          <a
+            href={`/?article=${article.id}`}
+            onClick={(e: any) => {
+              // 通常クリック時は SPA の onClick ハンドラを優先
+              if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                e.preventDefault();
+                onClick?.();
+              }
+            }}
+            className="hover:underline"
+          >
+            {highlightedTitle}
+          </a>
         </h3>
         <p className="mt-1 text-sm text-slate-600 line-clamp-2">
           {highlightedContent}

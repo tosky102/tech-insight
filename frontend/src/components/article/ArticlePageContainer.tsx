@@ -10,6 +10,7 @@
  * ここでは「状態管理とデータ取得」に集中し、見た目は子コンポーネントに委譲する。
  */
 import { useState, useCallback, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type {
   Article,
   ArticleCreateInput,
@@ -56,6 +57,12 @@ export function ArticlePageContainer({
   const [isDeleting, setIsDeleting] = useState(false);
   /** 削除確認モーダルで対象にしている記事（null のときはモーダル非表示） */
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
+  const [prefetchedArticleId, setPrefetchedArticleId] = useState<number | null>(
+    null
+  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   /**
    * 記事一覧取得（キーワード検索含む）
@@ -138,6 +145,36 @@ export function ArticlePageContainer({
     // 初期表示時はキーワード無しで 1 ページ目を取得（「全記事一覧」）
     fetchList(1);
   }, [fetchList]);
+
+  // クエリパラメータ ?article=ID が指定されている場合、その記事を自動選択する。
+  // 一覧に存在しなければ個別取得して先頭に挿入し、必ず画面内に表示する。
+  useEffect(() => {
+    const idParam = searchParams?.get("article");
+    if (!idParam) return;
+    const id = Number(idParam);
+    if (!Number.isInteger(id)) return;
+    const found = articles.find((a) => a.id === id);
+    if (found) {
+      setSelectedArticle(found);
+      return;
+    }
+    if (prefetchedArticleId === id) return;
+    setPrefetchedArticleId(id);
+    void (async () => {
+      try {
+        const article = await api.getArticle(id);
+        setArticles((prev) => {
+          if (prev.some((a) => a.id === article.id)) {
+            return prev;
+          }
+          return [article, ...prev];
+        });
+        setSelectedArticle(article);
+      } catch (e) {
+        console.error("failed to preload article from URL", e);
+      }
+    })();
+  }, [searchParams, articles, prefetchedArticleId]);
 
   // 一覧が差し替わったとき、現在選択中の記事が一覧に含まれていなければ選択を解除する
   useEffect(() => {
@@ -255,8 +292,12 @@ export function ArticlePageContainer({
       void api
         .logClick({ articleId: article.id, mode, query })
         .catch((e) => console.error("failed to log click", e));
+      // URL に ?article=ID を反映して共有しやすくする
+      const sp = new URLSearchParams(searchParams ?? undefined);
+      sp.set("article", String(article.id));
+      router.push(`${pathname}?${sp.toString()}`);
     },
-    [searchMode, lastSemanticQuery, lastKeyword]
+    [searchMode, lastSemanticQuery, lastKeyword, router, pathname, searchParams]
   );
 
   // カテゴリボタン押下時: キーワード検索モードに切り替え、カテゴリ名で検索を実行する
