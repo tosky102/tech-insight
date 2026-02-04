@@ -41,6 +41,8 @@ export interface ArticleListProps {
   /** 一覧ヘッダー右側に表示するカテゴリフィルター（未指定時はセレクト非表示） */
   categoryFilter?: string;
   onCategoryFilterChange?: (value: string) => void;
+  /** 検索クエリに基づき、一覧カード内でハイライトするための文字列 */
+  highlightQuery?: string;
 }
 
 export function ArticleList({
@@ -60,6 +62,7 @@ export function ArticleList({
   onEmptyAction,
   categoryFilter,
   onCategoryFilterChange,
+  highlightQuery,
 }: ArticleListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMore = articles.length < total && total > 0;
@@ -176,6 +179,7 @@ export function ArticleList({
                 article={article}
                 isSelected={article.id === selectedArticleId}
                 onClick={() => onArticleClick(article)}
+                highlightQuery={highlightQuery}
               />
             ))}
             {isLoading && articles.length > 0 && (

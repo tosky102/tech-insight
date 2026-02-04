@@ -5,21 +5,53 @@
  *
  * - タイトル・本文冒頭・カテゴリ・著者・更新日のサマリを表示
  * - クリック / Enter / Space で右側の詳細パネルに記事を表示する
+ * - highlightQuery が指定されている場合、タイトルと本文の該当部分をハイライト表示する
  */
 import type { Article } from "@/types/article";
 import { Card } from "@/components/ui/Card";
+import { useMemo } from "react";
 
 export interface ArticleCardProps {
   article: Article;
   /** 右側の詳細パネルで表示中かどうか（背景でハイライト） */
   isSelected?: boolean;
   onClick?: () => void;
+  /** 検索クエリ（AI/ハイブリッド/キーワード）に基づき、マッチしそうな部分をハイライトする */
+  highlightQuery?: string;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightText(text: string, query?: string) {
+  if (!query) return text;
+  const q = query.trim();
+  if (!q) return text;
+
+  const pattern = new RegExp(`(${escapeRegExp(q)})`, "gi");
+  const parts = text.split(pattern);
+  const lowerQ = q.toLowerCase();
+
+  return parts.map((part, index) =>
+    part.toLowerCase() === lowerQ ? (
+      <mark
+        key={index}
+        className="rounded bg-yellow-200 px-0.5 py-0 text-slate-900"
+      >
+        {part}
+      </mark>
+    ) : (
+      <span key={index}>{part}</span>
+    )
+  );
 }
 
 export function ArticleCard({
   article,
   isSelected = false,
   onClick,
+  highlightQuery,
 }: ArticleCardProps) {
   const dateTime = new Date(article.updated_at).toLocaleString("ja-JP", {
     year: "numeric",
@@ -28,6 +60,15 @@ export function ArticleCard({
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  const highlightedTitle = useMemo(
+    () => highlightText(article.title, highlightQuery),
+    [article.title, highlightQuery]
+  );
+  const highlightedContent = useMemo(
+    () => highlightText(article.content, highlightQuery),
+    [article.content, highlightQuery]
+  );
 
   return (
     <Card
@@ -54,10 +95,10 @@ export function ArticleCard({
           </span>
         )}
         <h3 className="font-semibold text-slate-900 line-clamp-2">
-          {article.title}
+          {highlightedTitle}
         </h3>
         <p className="mt-1 text-sm text-slate-600 line-clamp-2">
-          {article.content}
+          {highlightedContent}
         </p>
         <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">
           <div>

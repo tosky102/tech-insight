@@ -204,7 +204,6 @@ export function ArticlePageContainer({
           setTotal(0);
           setPage(1);
         }
-      } else {
         if (lastKeyword.trim().length > 0) {
           // 直近のキーワード検索がある場合はそれを再実行
           fetchList(1, lastKeyword, false, sort);
@@ -214,7 +213,7 @@ export function ArticlePageContainer({
           setLastKeyword(lastSemanticQuery);
           fetchList(1, lastSemanticQuery, false, sort);
         } else {
-          // どちらの履歴もない場合は全件取得
+          // どの履歴もない場合は全件取得
           fetchList(1, undefined, false, sort);
         }
       }
@@ -375,6 +374,10 @@ export function ArticlePageContainer({
       ? "該当する記事がありませんでした。"
       : undefined;
 
+  // 現在の検索モードに応じて、ハイライトに使うクエリ文字列を決定
+  const highlightQuery =
+    searchMode === "semantic" ? lastSemanticQuery : lastKeyword;
+
   return (
     <div className="mx-auto flex h-full w-full max-w-full flex-col overflow-hidden px-4 py-8 pb-4 sm:px-6 md:max-w-[1040px] lg:max-w-[1600px] lg:px-8">
       <header className="mb-6 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -413,6 +416,7 @@ export function ArticlePageContainer({
             onEmptyAction={handleEmptyAction}
             categoryFilter={categoryFilter}
             onCategoryFilterChange={handleCategoryFilterChange}
+            highlightQuery={highlightQuery}
           />
         </div>
         <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:flex-none lg:shrink-0">
